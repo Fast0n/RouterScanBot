@@ -2,7 +2,6 @@
 token = 'TOKEN'
 
 start_msg = "Benvenuto su @RouterScanBot\n"\
-            "Semplice Bot Telegram per la visualizzazione dei dispositivi\n"\
-            "connessi nel tuo modem\n"\
+            "Semplice Bot Telegram per la visualizzazione dei dispositivi connessi nel tuo modem"\
 
 mac_address = "URL"

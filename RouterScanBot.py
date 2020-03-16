@@ -4,38 +4,34 @@ import telepot
 from time import sleep
 from settings import token, mac_address, start_msg
 import requests
+import validators
+from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
+import json
+
+interface = "en0"
+
 
 def on_chat_message(msg):
-    findX = ""
-    notfindX = ""
+    final = ""
     content_type, chat_type, chat_id = telepot.glance(msg)
-
     command_input = msg['text']
 
     if command_input == '/start':
-        bot.sendMessage(chat_id, start_msg)
+        markup = ReplyKeyboardMarkup(keyboard=[["📡Scansiona", "📈Speedtest"]], resize_keyboard=True,
+                                     one_time_keyboard=True)
+        bot.sendMessage(chat_id, start_msg, reply_markup=markup)
 
-    if command_input == '/speedtest':
-        sent = bot.sendMessage(chat_id, "SpeedTest in corso...\nIl tempo varia in base alla tua connessione")
-        edited = telepot.message_identifier(sent)
-        raw = os.popen("speedtest").read()
-        raw = raw.split("\n")
-        raw = ('\n'.join(raw[1:2]) + "\n" + str(raw[4]) + "\n" + str(raw[6]) + "\n" + str(raw[8]))
-        bot.editMessageText(edited, raw)
-        
-    if command_input == '/scan':
+    if command_input == '/scan' or command_input == "📡Scansiona":
+        if not validators.url(mac_address):
+            bot.sendMessage(chat_id, "URL non valido")
+            sys.exit()
+        else:
+            wjdata = requests.get(mac_address).json()
+
         # comando per ricavare le reti
-        os.popen("sudo ls").read()
-        raw = os.popen("sudo arp-scan --interface=eth0 --localnet").read()
+        raw = os.popen("arp-scan --interface=" +
+                       interface + " --localnet").read()
         sleep(1)
-
-        # scarica la lista degli indirizzi conosciuti
-        url = mac_address
-        r = requests.get(url)
-        file = open("address_list.txt", "w")
-        file.write(r.text)
-        file.close()
-        address_list = open("address_list.txt", "r").read()
 
         # sapere il numero dei dispositivi collegati
         base = raw.split("\n")
@@ -49,42 +45,38 @@ def on_chat_message(msg):
         c = len(lista)
 
         for i in range(0, c):
-            righa = lista[i]
-            
-            # estrare il mac address dalla lista
-            divisione = lista[i].split("\t")[1:-1]
-            d = len(divisione)
 
-            for o in range(0, d):
-                elementi = divisione[o]
-                # crea la lista
-                url = address_list.split("\n")
-                e = len(url)
+            # estrare elementi dalla lista
+            ip = lista[i].split("\t")[0]
+            mac = lista[i].split("\t")[1]
+            desc = lista[i].split("\t")[2]
+            try:
+                name = wjdata['data']['macaddress'][0][mac]
+            except:
+                if ip == "192.168.1.1":
+                    name = "Modem"
+                else:
+                    name = "Sconosciuto"
 
-                for j in range(0, e):
-                    indirizzi = url[j]
-                    if not url[j].find(divisione[o].upper()) == -1:
-                        name = url[j].split("&")
-                        name = name[1]
-
-                        findX += str(lista[i].split("\t")[-3]) + "\t" +\
-                            name[1:] + "\n" +\
-                            divisione[o].upper() + "\t" +\
-                            str(lista[i].split("\t")[-1]) + "_ "
-                        break
-                    if not elementi in address_list and j == e - 1:
-                        notfindX += str(lista[i].split("\t")[-3]) + "\t" +\
-                            "Sconosciuto" + "\n" +\
-                            elementi.upper() + "\t" +\
-                            str(lista[i].split("\t")[-1]) + "\n\n"
-                    else:
-                        notfindX = ""
+            final += ("["+ip + "]("+ip+") *" + name +
+                      "*\n```" + mac + "``` _" + desc + "_\n\n")
 
         # invia il messaggio su TG
-        msg = "IP\t| Nome\t|Mac Adress\t| Tecnologia\n" +\
-            findX.replace("_ ", "\n\n") + notfindX +\
-            lunghezza.replace("responded", "Dispositivi")[1:]
-        bot.sendMessage(chat_id, msg)
+        msg = "*IP\t| Nome\t|Mac Adress\t| Tecnologia\n\n*" +\
+            final + "`" + \
+            lunghezza.replace("responded", "Dispositivi")[
+                1:] + "`\n\nFonte([Qui]("+mac_address+"))"
+        bot.sendMessage(chat_id, msg, parse_mode='Markdown')
+
+    if command_input == '/speedtest' or command_input == "📈Speedtest":
+        sent = bot.sendMessage(
+            chat_id, "SpeedTest in corso...\nIl tempo varia in base alla tua connessione")
+        edited = telepot.message_identifier(sent)
+        raw = os.popen("speedtest").read()
+        raw = raw.split("\n")
+        raw = ('\n'.join(raw[1:2]) + "\n" + str(raw[4]) +
+               "\n" + str(raw[6]) + "\n" + str(raw[8]))
+        bot.editMessageText(edited, raw)
 
 
 # Main

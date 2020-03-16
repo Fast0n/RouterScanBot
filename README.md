@@ -2,7 +2,18 @@ Semplice Bot Telegram per la visualizzazione dei dispositivi connessi nel tuo mo
 
 ```
 Esempio di lista
-0A:1B:2C:3D:4E:5F & Nome dispositivo
+
+{
+   "data":{
+      "macaddress":[
+         {
+            "mac":"title",
+            "mac":"title",
+            "mac":"title"
+         }
+      ]
+   }
+}
 ```
 ##### Consigliato pastebin.com #####
 # Dona per il progetto
